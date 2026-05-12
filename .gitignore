@@ -1,12 +1,17 @@
+# Raw and processed datasets
+data/raw/*
+data/processed/*
+
+# Keep empty folders visible on GitHub
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Saved trained model artifacts
+models/*
+!models/.gitkeep
+
+# Python
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
-.venv/
-venv/
-.env
-data/raw/*
-data/processed/*
-models/*
-!data/raw/.gitkeep
-!data/processed/.gitkeep
-!models/.gitkeep
+
