@@ -24,4 +24,20 @@ Due to licensing constraints, raw datasets are not included in this repository.
 Instructions for obtaining the data are provided in `data/README.md`.
 
 ## Repository Structure
-
+repo/
+├── README.md
+├── requirements.txt
+├── .gitignore
+├── data/
+│   ├── raw/
+│   └── processed/
+├── src/
+│   ├── data.py
+│   ├── models.py
+│   ├── train.py
+│   ├── evaluate.py
+│   └── utils.py
+├── notebooks/
+├── results/
+├── configs/
+└── models/
