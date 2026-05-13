@@ -18,7 +18,7 @@ The study addresses the following research questions:
 The experiments are conducted on two publicly available datasets:
 
 - **AG News** (4 classes, balanced)
-- **Kaggle News Category Dataset** (41 classes, fine-grained and imbalanced)
+- **Kaggle News Category Dataset** (42 classes, fine-grained and imbalanced, later merged to 22 classes)
 
 Due to licensing constraints, raw datasets are not included in this repository.  
 Instructions for obtaining the data are provided in `data/README.md`.
@@ -29,9 +29,11 @@ repo/
 ├── requirements.txt
 ├── .gitignore
 ├── data/
+│   ├── README.md
 │   ├── raw/
 │   └── processed/
 ├── src/
+│   ├── __init__.py
 │   ├── data.py
 │   ├── models.py
 │   ├── train.py
@@ -40,4 +42,6 @@ repo/
 ├── notebooks/
 ├── results/
 ├── configs/
+│   ├── __init__.py
+│   └── experiment_settings.py
 └── models/
