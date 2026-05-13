@@ -42,7 +42,7 @@ EXPERIMENT_CONFIG = {
     "ag_validation_size": 0.10,
     "kaggle_original_classes": 42,
     "kaggle_category_merging": True,
-    "kaggle_expected_merged_classes": 21,
+    "kaggle_expected_merged_classes": 22,
     "kaggle_test_size": 0.15,
     "kaggle_validation_size_from_train_val": 0.1765,
 }
