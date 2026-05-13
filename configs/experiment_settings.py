@@ -53,8 +53,9 @@ CNN_CONFIG = {
     "num_filters": 128,
     "kernel_sizes": (3, 4, 5),
     "dropout": 0.5,
+    "max_vocab_size": 50000,
+    "min_token_frequency": 2,
 }
-
 
 ROBERTA_CONFIG = {
     "checkpoint": "roberta-base",
