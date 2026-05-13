@@ -24,6 +24,8 @@ Due to licensing constraints, raw datasets are not included in this repository.
 Instructions for obtaining the data are provided in `data/README.md`.
 
 ## Repository Structure
+
+```text
 repo/
 ├── README.md
 ├── requirements.txt
@@ -45,3 +47,4 @@ repo/
 │   ├── __init__.py
 │   └── experiment_settings.py
 └── models/
+```
