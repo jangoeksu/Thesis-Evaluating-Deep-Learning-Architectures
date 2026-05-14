@@ -32,6 +32,8 @@ repo/
 │   ├── README.md
 │   ├── raw/
 │   └── processed/
+├── scripts/
+│   └── download_data.py
 ├── src/
 │   ├── __init__.py
 │   ├── data.py
