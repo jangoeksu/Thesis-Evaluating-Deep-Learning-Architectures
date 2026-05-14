@@ -61,16 +61,29 @@ pip install -r requirements.txt
 
 ## Data Setup
 
-Raw dataset files are not included in this repository. They must be placed locally in:
+Raw dataset files are not included in this repository.
+
+The AG News dataset can be prepared automatically from the repository root by running:
+
+```bash
+python scripts/download_data.py
+```
+
+This creates:
 
 ```text
 data/raw/
 ├── AG_train.csv
-├── AG_test.csv
-└── Kaggle_News.json
+└── AG_test.csv
 ```
 
-Further dataset setup details are provided in `data/README.md`.
+The Kaggle News Category Dataset must be downloaded separately through the Kaggle CLI and placed in:
+
+```text
+data/raw/Kaggle_News.json
+```
+
+Further dataset setup details, including the exact Kaggle command, are provided in `data/README.md`.
 
 ## Running the Preprocessing Pipeline
 
