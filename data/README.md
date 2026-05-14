@@ -11,7 +11,7 @@ This project uses two English-language news classification datasets:
    - File used locally:
      - `data/raw/Kaggle_News.json`
 
-The raw datasets are not committed to this repository. They must be downloaded separately from their original Kaggle sources and placed in `data/raw/` before running the preprocessing pipeline.
+The raw datasets are not committed to this repository. They must be obtained separately and placed in `data/raw/` before running the preprocessing pipeline.
 
 ## Folder structure
 
@@ -26,6 +26,8 @@ The Kaggle News Category Dataset contains 42 original categories. For this thesi
 
 ## Reproducible data setup
 
+### Kaggle News Category Dataset
+
 The Kaggle News Category Dataset can be downloaded with the Kaggle CLI:
 
 ```bash
@@ -38,12 +40,30 @@ After downloading, rename the JSON file to:
 data/raw/Kaggle_News.json
 ```
 
-The AG News dataset must be downloaded from the Kaggle source used for this thesis and placed in:
+### AG News
+
+The AG News files used in this project correspond to the input data used by the Kaggle notebook:
+
+```text
+mohsinsial/ag-news-classifications
+```
+
+The notebook itself can be retrieved with:
+
+```bash
+kaggle kernels pull mohsinsial/ag-news-classifications
+```
+
+However, this command pulls the Kaggle notebook/kernel rather than directly downloading the attached input dataset files. The AG News data files therefore need to be obtained from the notebook’s referenced input data and placed locally as:
 
 ```text
 data/raw/AG_train.csv
 data/raw/AG_test.csv
 ```
+
+The repository code expects exactly these filenames.
+
+## Running preprocessing
 
 After the raw files are available, run the preprocessing pipeline from the repository root:
 
