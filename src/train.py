@@ -7,7 +7,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import pandas as pd
 import torch
 from torch import nn
@@ -46,7 +45,9 @@ from src.utils import (
     append_error_log,
     append_run_config,
     cleanup_memory,
+    collect_peak_gpu_memory_metrics,
     compute_roberta_metrics,
+    reset_peak_gpu_memory_stats,
     reset_random_seeds,
     save_repository_run_metadata,
 )
@@ -210,7 +211,7 @@ def train_cnn(
     label_names: list[str],
     epochs: int,
     run_id: str,
-) -> tuple[TextCNN, dict[str, float]]:
+) -> tuple[TextCNN, dict[str, float | None]]:
     reset_random_seeds(SEED)
     cleanup_memory()
 
@@ -229,9 +230,7 @@ def train_cnn(
             "kernel_sizes": CNN_CONFIG["kernel_sizes"],
             "dropout": CNN_CONFIG["dropout"],
             "max_vocab_size": CNN_CONFIG["max_vocab_size"],
-            "min_token_frequency": CNN_CONFIG[
-                "min_token_frequency"
-            ],
+            "min_token_frequency": CNN_CONFIG["min_token_frequency"],
         },
     )
 
@@ -292,6 +291,7 @@ def train_cnn(
     best_validation_macro_f1 = -1.0
     best_model_state: dict[str, torch.Tensor] | None = None
 
+    reset_peak_gpu_memory_stats()
     training_start = time.time()
 
     for _ in range(epochs):
@@ -316,6 +316,7 @@ def train_cnn(
             }
 
     training_time = time.time() - training_start
+    memory_metrics = collect_peak_gpu_memory_metrics()
 
     if best_model_state is None:
         raise RuntimeError("CNN training did not produce a best model state.")
@@ -333,6 +334,7 @@ def train_cnn(
     test_metrics["best_validation_macro_f1"] = float(
         best_validation_macro_f1
     )
+    test_metrics.update(memory_metrics)
 
     save_evaluation_outputs(
         dataset_name=dataset_name,
@@ -411,7 +413,7 @@ def build_roberta_training_arguments(
         "weight_decay": ROBERTA_CONFIG["weight_decay"],
         "logging_strategy": ROBERTA_CONFIG["logging_strategy"],
         "save_strategy": ROBERTA_CONFIG["save_strategy"],
-               "load_best_model_at_end": ROBERTA_CONFIG[
+        "load_best_model_at_end": ROBERTA_CONFIG[
             "load_best_model_at_end"
         ],
         "metric_for_best_model": ROBERTA_CONFIG[
@@ -463,7 +465,7 @@ def train_roberta(
     label_names: list[str],
     epochs: int,
     run_id: str,
-) -> tuple[Trainer, dict[str, float]]:
+) -> tuple[Trainer, dict[str, float | None]]:
     reset_random_seeds(SEED)
     cleanup_memory()
 
@@ -481,6 +483,12 @@ def train_roberta(
             "checkpoint": EXPERIMENT_CONFIG["roberta_checkpoint"],
             "num_classes": num_classes,
             "weight_decay": ROBERTA_CONFIG["weight_decay"],
+            "metric_for_best_model": ROBERTA_CONFIG[
+                "metric_for_best_model"
+            ],
+            "load_best_model_at_end": ROBERTA_CONFIG[
+                "load_best_model_at_end"
+            ],
         },
     )
 
@@ -542,9 +550,13 @@ def train_roberta(
         data_collator=data_collator,
     )
 
+    reset_peak_gpu_memory_stats()
     training_start = time.time()
+
     trainer.train()
+
     training_time = time.time() - training_start
+    memory_metrics = collect_peak_gpu_memory_metrics()
 
     validation_metrics, _, _ = evaluate_roberta_validation(
         trainer=trainer,
@@ -559,14 +571,15 @@ def train_roberta(
         number_of_samples=len(test_df),
     )
 
-    test_metrics["train_time_seconds"] = float(training_time)
-       best_validation_macro_f1 = (
+    best_validation_macro_f1 = (
         float(trainer.state.best_metric)
         if trainer.state.best_metric is not None
         else float(validation_metrics["macro_f1"])
     )
 
+    test_metrics["train_time_seconds"] = float(training_time)
     test_metrics["best_validation_macro_f1"] = best_validation_macro_f1
+    test_metrics.update(memory_metrics)
 
     save_evaluation_outputs(
         dataset_name=dataset_name,
@@ -642,6 +655,9 @@ def create_full_experiment_config(
             "roberta_learning_rate"
         ],
         "roberta_checkpoint": EXPERIMENT_CONFIG["roberta_checkpoint"],
+        "roberta_metric_for_best_model": ROBERTA_CONFIG[
+            "metric_for_best_model"
+        ],
         "max_length": EXPERIMENT_CONFIG["max_length"],
         "primary_metric": EXPERIMENT_CONFIG["primary_metric"],
         "secondary_metric": EXPERIMENT_CONFIG["secondary_metric"],
@@ -655,7 +671,7 @@ def create_result_row(
     model_name: str,
     status: str,
     dataset_info: dict[str, Any],
-    metrics: dict[str, float] | None = None,
+    metrics: dict[str, float | None] | None = None,
     error: Exception | None = None,
 ) -> dict[str, Any]:
     metrics = metrics or {}
@@ -684,6 +700,12 @@ def create_result_row(
         ),
         "inference_time_per_sample_ms": metrics.get(
             "inference_time_per_sample_ms"
+        ),
+        "peak_gpu_memory_allocated_mb": metrics.get(
+            "peak_gpu_memory_allocated_mb"
+        ),
+        "peak_gpu_memory_reserved_mb": metrics.get(
+            "peak_gpu_memory_reserved_mb"
         ),
         "error_type": (
             type(error).__name__
