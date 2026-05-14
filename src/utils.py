@@ -51,6 +51,27 @@ def cleanup_memory() -> None:
         torch.cuda.empty_cache()
 
 
+def reset_peak_gpu_memory_stats() -> None:
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
+
+
+def collect_peak_gpu_memory_metrics() -> dict[str, float | None]:
+    if not torch.cuda.is_available():
+        return {
+            "peak_gpu_memory_allocated_mb": None,
+            "peak_gpu_memory_reserved_mb": None,
+        }
+
+    peak_allocated_mb = torch.cuda.max_memory_allocated() / (1024 ** 2)
+    peak_reserved_mb = torch.cuda.max_memory_reserved() / (1024 ** 2)
+
+    return {
+        "peak_gpu_memory_allocated_mb": float(peak_allocated_mb),
+        "peak_gpu_memory_reserved_mb": float(peak_reserved_mb),
+    }
+
+
 def compute_classification_metrics(
     y_true: list[int] | np.ndarray,
     y_pred: list[int] | np.ndarray,
