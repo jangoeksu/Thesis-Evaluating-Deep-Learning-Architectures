@@ -61,11 +61,13 @@ ROBERTA_CONFIG = {
     "checkpoint": "roberta-base",
     "weight_decay": 0.01,
     "logging_strategy": "epoch",
-    "save_strategy": "no",
-    "load_best_model_at_end": False,
+    "save_strategy": "epoch",
+    "load_best_model_at_end": True,
+    "metric_for_best_model": "macro_f1",
+    "greater_is_better": True,
+    "save_total_limit": 1,
     "report_to": "none",
 }
-
 
 AG_LABEL_MAPPING = {
     0: "World",
