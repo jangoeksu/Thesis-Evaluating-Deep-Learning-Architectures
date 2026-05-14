@@ -411,8 +411,17 @@ def build_roberta_training_arguments(
         "weight_decay": ROBERTA_CONFIG["weight_decay"],
         "logging_strategy": ROBERTA_CONFIG["logging_strategy"],
         "save_strategy": ROBERTA_CONFIG["save_strategy"],
-        "load_best_model_at_end": ROBERTA_CONFIG[
+               "load_best_model_at_end": ROBERTA_CONFIG[
             "load_best_model_at_end"
+        ],
+        "metric_for_best_model": ROBERTA_CONFIG[
+            "metric_for_best_model"
+        ],
+        "greater_is_better": ROBERTA_CONFIG[
+            "greater_is_better"
+        ],
+        "save_total_limit": ROBERTA_CONFIG[
+            "save_total_limit"
         ],
         "seed": SEED,
         "data_seed": SEED,
@@ -551,9 +560,13 @@ def train_roberta(
     )
 
     test_metrics["train_time_seconds"] = float(training_time)
-    test_metrics["best_validation_macro_f1"] = float(
-        validation_metrics["macro_f1"]
+       best_validation_macro_f1 = (
+        float(trainer.state.best_metric)
+        if trainer.state.best_metric is not None
+        else float(validation_metrics["macro_f1"])
     )
+
+    test_metrics["best_validation_macro_f1"] = best_validation_macro_f1
 
     save_evaluation_outputs(
         dataset_name=dataset_name,
