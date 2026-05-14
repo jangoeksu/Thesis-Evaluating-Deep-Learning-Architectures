@@ -16,7 +16,7 @@ The study addresses the following research questions:
 
 The experiments are conducted on two publicly available datasets:
 
-- **AG News**, used as a four-class benchmark dataset. The local train and test files correspond to the input data used by the Kaggle notebook `mohsinsial/ag-news-classifications`.
+- **AG News**, used as a four-class benchmark dataset. The raw train and test files are generated locally through `scripts/download_data.py` from the Hugging Face dataset `fancyzhx/ag_news`.
 - **Kaggle News Category Dataset**, which contains 42 original categories and is merged into 22 broader target classes for this thesis.
 
 Due to licensing and repository-size considerations, raw datasets are not included in this repository. Instructions for obtaining and placing the data are provided in `data/README.md`.
