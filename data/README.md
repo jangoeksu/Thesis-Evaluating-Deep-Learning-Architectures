@@ -24,8 +24,37 @@ AG News is used as a four-class benchmark dataset.
 
 The Kaggle News Category Dataset contains 42 original categories. For this thesis, these categories are merged into 22 broader target classes as defined in `configs/experiment_settings.py`.
 
+## Reproducible data setup
+
+The Kaggle News Category Dataset can be downloaded with the Kaggle CLI:
+
+```bash
+kaggle datasets download -d rmisra/news-category-dataset -p data/raw --unzip
+```
+
+After downloading, rename the JSON file to:
+
+```text
+data/raw/Kaggle_News.json
+```
+
+The AG News dataset must be downloaded from the Kaggle source used for this thesis and placed in:
+
+```text
+data/raw/AG_train.csv
+data/raw/AG_test.csv
+```
+
+After the raw files are available, run the preprocessing pipeline from the repository root:
+
+```bash
+python src/data.py
+```
+
 ## Expected processed outputs
 
 After running the preprocessing pipeline, the `processed/` folder will contain reproducible train, validation, and test files for both datasets, together with the required label mapping files.
+
+The preprocessing pipeline also writes summary files to `results/`, including dataset split summaries, leakage checks, duplicate handling summaries, and Kaggle category distribution tables.
 
 These processed files are generated automatically and are not required to be added manually.
