@@ -87,7 +87,7 @@ Further dataset setup details, including the exact Kaggle command, are provided 
 
 ## Running the Preprocessing Pipeline
 
-To validate, clean, merge, split, and export the datasets, run:
+Once AG News has been generated through `scripts/download_data.py` and the Kaggle News Category Dataset has been placed in `data/raw/`, run:
 
 ```bash
 python src/data.py
