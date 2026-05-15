@@ -17,9 +17,9 @@ The study addresses the following research questions:
 The experiments are conducted on two publicly available datasets:
 
 - **AG News**, used as a four-class benchmark dataset. The raw train and test files are generated locally through `scripts/download_data.py` from the Hugging Face dataset `fancyzhx/ag_news`.
-- **Kaggle News Category Dataset**, which contains 42 original categories and is merged into 22 broader target classes for this thesis.
+- **Kaggle News Category Dataset**, which contains 42 original categories and is merged into 22 broader target classes for this thesis. The raw JSON file is downloaded automatically through `scripts/download_data.py`.
 
-Due to licensing and repository-size considerations, raw datasets are not included in this repository. Instructions for obtaining and placing the data are provided in `data/README.md`.
+Due to licensing and repository-size considerations, raw datasets are not included in this repository. They are generated or downloaded locally through the project setup script.
 
 ## Repository Structure
 
@@ -33,7 +33,9 @@ repo/
 │   ├── raw/
 │   └── processed/
 ├── scripts/
-│   └── download_data.py
+│   ├── __init__.py
+│   ├── download_data.py
+│   └── run_experiment.py
 ├── src/
 │   ├── __init__.py
 │   ├── data.py
@@ -43,6 +45,7 @@ repo/
 │   └── utils.py
 ├── notebooks/
 ├── results/
+│   └── README.md
 ├── configs/
 │   ├── __init__.py
 │   └── experiment_settings.py
@@ -59,11 +62,30 @@ Install the required Python packages from the repository root:
 pip install -r requirements.txt
 ```
 
-## Data Setup
+The Kaggle News Category Dataset is downloaded through KaggleHub. Depending on the local environment, Kaggle authentication may need to be configured once before the first download.
 
-Raw dataset files are not included in this repository.
+## One-Command Full Experiment
 
-The AG News dataset can be prepared automatically from the repository root by running:
+After installing the dependencies and configuring Kaggle authentication if required, the complete experiment can be executed from the repository root with:
+
+```bash
+python scripts/run_experiment.py
+```
+
+This command performs the full workflow:
+
+```text
+1. Download AG News from Hugging Face.
+2. Download the Kaggle News Category Dataset through KaggleHub.
+3. Store all raw files in data/raw/.
+4. Run preprocessing, validation, category merging, duplicate handling, and split generation.
+5. Train CNN and RoBERTa on both datasets.
+6. Save evaluation outputs, model artifacts, and experiment summaries.
+```
+
+## Data Setup Only
+
+To download and prepare the raw datasets without starting the full experiment, run:
 
 ```bash
 python scripts/download_data.py
@@ -74,20 +96,15 @@ This creates:
 ```text
 data/raw/
 ├── AG_train.csv
-└── AG_test.csv
+├── AG_test.csv
+└── Kaggle_News.json
 ```
 
-The Kaggle News Category Dataset must be downloaded separately through the Kaggle CLI and placed in:
+Further information about the datasets and generated files is provided in `data/README.md`.
 
-```text
-data/raw/Kaggle_News.json
-```
+## Running the Preprocessing Pipeline Separately
 
-Further dataset setup details, including the exact Kaggle command, are provided in `data/README.md`.
-
-## Running the Preprocessing Pipeline
-
-Once AG News has been generated through `scripts/download_data.py` and the Kaggle News Category Dataset has been placed in `data/raw/`, run:
+To validate, clean, merge, split, and export the datasets without starting model training, run:
 
 ```bash
 python src/data.py
@@ -102,15 +119,17 @@ results/
 
 The preprocessing pipeline validates the expected dataset schemas, verifies class counts, applies the 22-class Kaggle category merge, removes problematic duplicate texts, checks for text overlap across dataset splits, and saves supporting summary files for documentation.
 
-## Running the Full Experiment
+## Running the Training Pipeline Separately
 
-To run the complete CNN–RoBERTa comparison on both datasets, execute:
+To run the complete CNN–RoBERTa comparison after the raw data files are available, execute:
 
 ```bash
 python src/train.py
 ```
 
-The full experiment pipeline trains and evaluates both models on AG News and the merged Kaggle News Category Dataset.
+The training pipeline automatically calls the preprocessing step before model training. It then trains and evaluates both models on AG News and the merged Kaggle News Category Dataset.
+
+## Outputs
 
 The resulting outputs include:
 
@@ -118,11 +137,12 @@ The resulting outputs include:
 - classification reports,
 - confusion matrices,
 - row-level prediction exports,
+- preprocessing summaries,
 - experiment metadata,
 - timing metrics,
-- GPU memory metrics when CUDA is available.
+- peak GPU memory metrics when CUDA is available.
 
-These outputs are written primarily to:
+Evaluation outputs are written primarily to:
 
 ```text
 results/
