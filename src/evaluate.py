@@ -57,6 +57,7 @@ def test_cnn_with_timing(
     all_predictions = []
     all_labels = []
 
+    synchronize_cuda_if_available()
     inference_start = time.time()
 
     with torch.no_grad():
@@ -70,6 +71,7 @@ def test_cnn_with_timing(
             all_predictions.extend(predictions.cpu().numpy().tolist())
             all_labels.extend(labels.cpu().numpy().tolist())
 
+    synchronize_cuda_if_available()
     inference_time = time.time() - inference_start
 
     metrics = compute_classification_metrics(
@@ -112,10 +114,12 @@ def test_roberta_with_timing(
     test_labels: list[int],
     number_of_samples: int,
 ) -> tuple[dict[str, float], list[int], list[int]]:
+    synchronize_cuda_if_available()
     inference_start = time.time()
 
     test_output = trainer.predict(test_dataset)
 
+    synchronize_cuda_if_available()
     inference_time = time.time() - inference_start
 
     test_predictions = np.argmax(
