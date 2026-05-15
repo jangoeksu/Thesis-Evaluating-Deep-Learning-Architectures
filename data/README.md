@@ -8,10 +8,10 @@ This project uses two English-language news classification datasets:
      - `data/raw/AG_test.csv`
 
 2. **Kaggle News Category Dataset**
-   - File used locally:
+   - File generated locally:
      - `data/raw/Kaggle_News.json`
 
-The raw datasets are not committed to this repository. They must be obtained separately and placed in `data/raw/` before running the preprocessing pipeline.
+The raw datasets are not committed to this repository. They are downloaded or generated locally through the project setup scripts before running the preprocessing pipeline.
 
 ## Folder structure
 
@@ -24,53 +24,11 @@ AG News is used as a four-class benchmark dataset.
 
 The Kaggle News Category Dataset contains 42 original categories. For this thesis, these categories are merged into 22 broader target classes as defined in `configs/experiment_settings.py`.
 
-## Reproducible AG News setup
+## Reproducible raw dataset setup
 
-The AG News raw files are generated automatically from the Hugging Face dataset `fancyzhx/ag_news`.
+Both raw datasets are prepared through the project download script.
 
 From the repository root, run:
 
 ```bash
-python scripts/download_data.py
-```
-
-This creates:
-
-```text
-data/raw/AG_train.csv
-data/raw/AG_test.csv
-```
-
-The exported files contain exactly the `text` and `label` columns expected by the preprocessing pipeline.
-
-## Reproducible Kaggle News Category Dataset setup
-
-The Kaggle News Category Dataset can be downloaded with the Kaggle CLI:
-
-```bash
-kaggle datasets download -d rmisra/news-category-dataset -p data/raw --unzip
-```
-
-After downloading, rename the extracted JSON file to:
-
-```text
-data/raw/Kaggle_News.json
-```
-
-The Kaggle CLI requires Kaggle authentication to be configured on the local machine before running the download command.
-
-## Running preprocessing
-
-After all three raw files are available, run the preprocessing pipeline from the repository root:
-
-```bash
-python src/data.py
-```
-
-## Expected processed outputs
-
-After running the preprocessing pipeline, the `processed/` folder will contain reproducible train, validation, and test files for both datasets, together with the required label mapping files.
-
-The preprocessing pipeline also writes summary files to `results/`, including dataset split summaries, leakage checks, duplicate handling summaries, and Kaggle category distribution tables.
-
-These processed files are generated automatically and are not required to be added manually.
+python -m scripts.download_data
