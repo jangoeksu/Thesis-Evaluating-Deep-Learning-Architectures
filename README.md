@@ -69,7 +69,7 @@ The Kaggle News Category Dataset is downloaded through KaggleHub. Depending on t
 After installing the dependencies and configuring Kaggle authentication if required, the complete experiment can be executed from the repository root with:
 
 ```bash
-python scripts/run_experiment.py
+python -m scripts.run_experiment
 ```
 
 This command performs the full workflow:
@@ -88,7 +88,7 @@ This command performs the full workflow:
 To download and prepare the raw datasets without starting the full experiment, run:
 
 ```bash
-python scripts/download_data.py
+python -m scripts.download_data
 ```
 
 This creates:
@@ -107,7 +107,7 @@ Further information about the datasets and generated files is provided in `data/
 To validate, clean, merge, split, and export the datasets without starting model training, run:
 
 ```bash
-python src/data.py
+python -m src.data
 ```
 
 This creates processed datasets and preprocessing summaries in:
@@ -124,7 +124,7 @@ The preprocessing pipeline validates the expected dataset schemas, verifies clas
 To run the complete CNN–RoBERTa comparison after the raw data files are available, execute:
 
 ```bash
-python src/train.py
+python -m src.train
 ```
 
 The training pipeline automatically calls the preprocessing step before model training. It then trains and evaluates both models on AG News and the merged Kaggle News Category Dataset.
