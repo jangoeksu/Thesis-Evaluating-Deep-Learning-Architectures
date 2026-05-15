@@ -50,6 +50,7 @@ from src.utils import (
     reset_peak_gpu_memory_stats,
     reset_random_seeds,
     save_repository_run_metadata,
+    synchronize_cuda_if_available,
 )
 
 
