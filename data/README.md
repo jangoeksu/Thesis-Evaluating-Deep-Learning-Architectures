@@ -32,4 +32,3 @@ From the repository root, run:
 
 ```bash
 python -m scripts.download_data
-´´´
