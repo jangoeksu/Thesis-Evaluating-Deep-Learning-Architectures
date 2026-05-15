@@ -125,20 +125,24 @@ def validate_ag_news(
 
 
 def validate_kaggle_news(kaggle_raw: pd.DataFrame) -> pd.DataFrame:
-    expected_columns = [
-        "link",
-        "headline",
-        "category",
-        "short_description",
-        "authors",
-        "date",
-    ]
+    required_columns = {
+    "link",
+    "headline",
+    "category",
+    "short_description",
+    "authors",
+    "date",
+}
 
-    if list(kaggle_raw.columns) != expected_columns:
-        raise ValueError(
-            f"Unexpected Kaggle News columns: {kaggle_raw.columns.tolist()}"
-        )
+actual_columns = set(kaggle_raw.columns)
 
+missing_columns = required_columns - actual_columns
+
+if missing_columns:
+    raise ValueError(
+        f"Kaggle News dataset is missing required columns: "
+        f"{sorted(missing_columns)}"
+    )
     original_class_count = kaggle_raw["category"].nunique()
 
     if original_class_count != EXPERIMENT_CONFIG["kaggle_original_classes"]:
