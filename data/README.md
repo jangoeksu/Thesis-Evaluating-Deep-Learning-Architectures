@@ -32,3 +32,32 @@ From the repository root, run:
 
 ```bash
 python -m scripts.download_data
+```
+
+This creates:
+
+```text
+data/raw/AG_train.csv
+data/raw/AG_test.csv
+data/raw/Kaggle_News.json
+```
+
+The AG News files are generated from the Hugging Face dataset `fancyzhx/ag_news` and contain exactly the `text` and `label` columns expected by the preprocessing pipeline.
+
+The Kaggle News Category Dataset is downloaded through KaggleHub and stored locally as `data/raw/Kaggle_News.json`. Depending on the local environment, Kaggle authentication may need to be configured once before the first download.
+
+## Running preprocessing
+
+After the raw files are available, run the preprocessing pipeline from the repository root:
+
+```bash
+python -m src.data
+```
+
+## Expected processed outputs
+
+After running the preprocessing pipeline, the `processed/` folder will contain reproducible train, validation, and test files for both datasets, together with the required label mapping files.
+
+The preprocessing pipeline also writes summary files to `results/`, including dataset split summaries, leakage checks, duplicate handling summaries, and Kaggle category distribution tables.
+
+These processed files are generated automatically and are not required to be added manually.
