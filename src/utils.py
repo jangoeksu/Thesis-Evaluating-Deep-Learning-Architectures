@@ -123,6 +123,11 @@ def compute_inference_time_metrics(
         ),
     }
 
+def synchronize_cuda_if_available() -> None:
+    """Synchronize CUDA operations before or after timing measurements."""
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+
 
 def collect_system_info() -> dict[str, Any]:
     return {
