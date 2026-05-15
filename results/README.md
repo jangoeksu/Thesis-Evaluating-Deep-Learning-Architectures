@@ -9,7 +9,7 @@ The files in this folder are created automatically when the preprocessing and tr
 Running:
 
 ```bash
-python src/data.py
+python -m src.data
 ```
 
 generates summary files such as:
@@ -29,7 +29,7 @@ These files document the prepared datasets, including split sizes, class distrib
 Running:
 
 ```bash
-python src/train.py
+python -m src.train
 ```
 
 generates evaluation files such as:
