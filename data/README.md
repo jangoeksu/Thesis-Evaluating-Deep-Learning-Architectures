@@ -24,11 +24,12 @@ AG News is used as a four-class benchmark dataset.
 
 The Kaggle News Category Dataset contains 42 original categories. For this thesis, these categories are merged into 22 broader target classes as defined in `configs/experiment_settings.py`.
 
-## Reproducible raw dataset setup
+## Reproducible dataset download
 
-Both raw datasets are prepared through the project download script.
+Both raw datasets are prepared automatically through the project download script.
 
 From the repository root, run:
 
 ```bash
 python -m scripts.download_data
+´´´
