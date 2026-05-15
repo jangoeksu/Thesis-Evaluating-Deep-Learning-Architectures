@@ -292,7 +292,8 @@ def train_cnn(
     best_validation_macro_f1 = -1.0
     best_model_state: dict[str, torch.Tensor] | None = None
 
-    reset_peak_gpu_memory_stats()
+        reset_peak_gpu_memory_stats()
+    synchronize_cuda_if_available()
     training_start = time.time()
 
     for _ in range(epochs):
@@ -316,6 +317,7 @@ def train_cnn(
                 for key, value in model.state_dict().items()
             }
 
+    synchronize_cuda_if_available()
     training_time = time.time() - training_start
     memory_metrics = collect_peak_gpu_memory_metrics()
 
@@ -552,10 +554,12 @@ def train_roberta(
     )
 
     reset_peak_gpu_memory_stats()
+    synchronize_cuda_if_available()
     training_start = time.time()
 
     trainer.train()
 
+    synchronize_cuda_if_available()
     training_time = time.time() - training_start
     memory_metrics = collect_peak_gpu_memory_metrics()
 
