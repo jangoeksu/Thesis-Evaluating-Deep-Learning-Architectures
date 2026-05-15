@@ -10,6 +10,7 @@ from datasets import load_dataset
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw"
+KAGGLE_DOWNLOAD_DIR = RAW_DATA_DIR / "_kaggle_download"
 
 AG_TRAIN_OUTPUT_PATH = RAW_DATA_DIR / "AG_train.csv"
 AG_TEST_OUTPUT_PATH = RAW_DATA_DIR / "AG_test.csv"
@@ -82,14 +83,23 @@ def find_downloaded_kaggle_news_file(download_directory: Path) -> Path:
     return matching_files[0]
 
 
+def prepare_kaggle_download_directory() -> None:
+    if KAGGLE_DOWNLOAD_DIR.exists():
+        shutil.rmtree(KAGGLE_DOWNLOAD_DIR)
+
+    KAGGLE_DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+
 def download_kaggle_news_category_dataset() -> None:
     if KAGGLE_NEWS_OUTPUT_PATH.exists():
         print("Kaggle News file already exists. Skipping Kaggle download.")
         return
 
+    prepare_kaggle_download_directory()
+
     downloaded_path = kagglehub.dataset_download(
         "rmisra/news-category-dataset",
-        output_dir=str(RAW_DATA_DIR),
+        output_dir=str(KAGGLE_DOWNLOAD_DIR),
     )
 
     downloaded_directory = Path(downloaded_path)
@@ -100,6 +110,8 @@ def download_kaggle_news_category_dataset() -> None:
         source_file_path,
         KAGGLE_NEWS_OUTPUT_PATH,
     )
+
+    shutil.rmtree(KAGGLE_DOWNLOAD_DIR, ignore_errors=True)
 
     print("Kaggle News Category Dataset download completed.")
     print(f"Raw JSON file saved to: {KAGGLE_NEWS_OUTPUT_PATH}")
