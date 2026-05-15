@@ -16,8 +16,8 @@ from configs.experiment_settings import (
 from src.utils import (
     compute_classification_metrics,
     compute_inference_time_metrics,
+    synchronize_cuda_if_available,
 )
-
 
 def evaluate_cnn(
     model: torch.nn.Module,
