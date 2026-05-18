@@ -564,6 +564,7 @@ def train_roberta(
             ],
             "max_length": EXPERIMENT_CONFIG["max_length"],
             "checkpoint": EXPERIMENT_CONFIG["roberta_checkpoint"],
+            "revision": ROBERTA_CONFIG["revision"],
             "num_classes": num_classes,
             "weight_decay": ROBERTA_CONFIG["weight_decay"],
             "metric_for_best_model": ROBERTA_CONFIG[
@@ -575,8 +576,14 @@ def train_roberta(
         },
     )
 
+    tokenizer_kwargs: dict[str, Any] = {}
+
+    if ROBERTA_CONFIG["revision"] is not None:
+        tokenizer_kwargs["revision"] = ROBERTA_CONFIG["revision"]
+
     tokenizer = AutoTokenizer.from_pretrained(
-        EXPERIMENT_CONFIG["roberta_checkpoint"]
+        EXPERIMENT_CONFIG["roberta_checkpoint"],
+        **tokenizer_kwargs,
     )
 
     train_encodings = tokenize_roberta_split(
@@ -749,6 +756,7 @@ def create_full_experiment_config(
             "roberta_learning_rate"
         ],
         "roberta_checkpoint": EXPERIMENT_CONFIG["roberta_checkpoint"],
+        "roberta_revision": ROBERTA_CONFIG["revision"],
         "roberta_metric_for_best_model": ROBERTA_CONFIG[
             "metric_for_best_model"
         ],
