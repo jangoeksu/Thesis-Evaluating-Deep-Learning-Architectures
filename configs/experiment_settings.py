@@ -84,6 +84,7 @@ ROBERTA_CONFIG = {
     "greater_is_better": True,
     "save_total_limit": 1,
     "report_to": "none",
+    "disable_tqdm": True,
 }
 
 
