@@ -35,6 +35,7 @@ from src.evaluate import (
     evaluate_cnn,
     evaluate_roberta_validation,
     save_evaluation_outputs,
+    save_mcnemar_test_output,
     test_cnn_with_timing,
     test_roberta_with_timing,
 )
@@ -243,7 +244,7 @@ def train_cnn(
     label_names: list[str],
     epochs: int,
     run_id: str,
-) -> tuple[TextCNN, dict[str, float | None]]:
+) -> tuple[TextCNN, dict[str, float | None], list[int], list[int]]:
     """Train, validate, test, and persist a CNN classifier for one dataset."""
     reset_random_seeds(SEED)
     cleanup_memory()
@@ -410,7 +411,7 @@ def train_cnn(
         vocab=vocab,
     )
 
-    return model, test_metrics
+    return model, test_metrics, test_labels, test_predictions
 
 
 def tokenize_roberta_split(
@@ -546,7 +547,7 @@ def train_roberta(
     label_names: list[str],
     epochs: int,
     run_id: str,
-) -> tuple[Trainer, dict[str, float | None]]:
+) -> tuple[Trainer, dict[str, float | None], list[int], list[int]]:
     """Train, validate, test, and persist RoBERTa for one dataset."""
     reset_random_seeds(SEED)
     cleanup_memory()
@@ -688,7 +689,7 @@ def train_roberta(
         tokenizer=tokenizer,
     )
 
-    return trainer, test_metrics
+    return trainer, test_metrics, test_labels, test_predictions
 
 
 def build_dataset_registry(
@@ -837,6 +838,36 @@ def save_full_results(
     return results_df
 
 
+def maybe_save_cnn_vs_roberta_significance_test(
+    dataset_name: str,
+    run_id: str,
+    prediction_registry: dict[str, dict[str, dict[str, list[int]]]],
+) -> None:
+    """
+    Save a McNemar test once CNN and RoBERTa predictions exist for a dataset.
+    """
+    dataset_predictions = prediction_registry.get(dataset_name, {})
+
+    if "CNN" not in dataset_predictions:
+        return
+
+    if "RoBERTa" not in dataset_predictions:
+        return
+
+    cnn_outputs = dataset_predictions["CNN"]
+    roberta_outputs = dataset_predictions["RoBERTa"]
+
+    save_mcnemar_test_output(
+        dataset_name=dataset_name,
+        run_id=run_id,
+        model_a_name="CNN",
+        model_b_name="RoBERTa",
+        y_true=cnn_outputs["y_true"],
+        model_a_predictions=cnn_outputs["y_pred"],
+        model_b_predictions=roberta_outputs["y_pred"],
+    )
+
+
 def run_full_experiment() -> pd.DataFrame:
     """Run all dataset-model combinations and save results incrementally."""
     reset_random_seeds(SEED)
@@ -858,6 +889,7 @@ def run_full_experiment() -> pd.DataFrame:
     )
 
     full_results: list[dict[str, Any]] = []
+    prediction_registry: dict[str, dict[str, dict[str, list[int]]]] = {}
 
     experiment_jobs = [
         (dataset_name, model_name)
@@ -877,7 +909,12 @@ def run_full_experiment() -> pd.DataFrame:
             cleanup_memory()
 
             if model_name == "CNN":
-                trained_object, metrics = train_cnn(
+                (
+                    trained_object,
+                    metrics,
+                    test_labels,
+                    test_predictions,
+                ) = train_cnn(
                     dataset_name=dataset_name,
                     train_df=dataset_info["train"],
                     validation_df=dataset_info["validation"],
@@ -888,7 +925,12 @@ def run_full_experiment() -> pd.DataFrame:
                     run_id=run_id,
                 )
             else:
-                trained_object, metrics = train_roberta(
+                (
+                    trained_object,
+                    metrics,
+                    test_labels,
+                    test_predictions,
+                ) = train_roberta(
                     dataset_name=dataset_name,
                     train_df=dataset_info["train"],
                     validation_df=dataset_info["validation"],
@@ -898,6 +940,17 @@ def run_full_experiment() -> pd.DataFrame:
                     epochs=EXPERIMENT_CONFIG["roberta_epochs"],
                     run_id=run_id,
                 )
+
+            prediction_registry.setdefault(dataset_name, {})[model_name] = {
+                "y_true": test_labels,
+                "y_pred": test_predictions,
+            }
+
+            maybe_save_cnn_vs_roberta_significance_test(
+                dataset_name=dataset_name,
+                run_id=run_id,
+                prediction_registry=prediction_registry,
+            )
 
             result_row = create_result_row(
                 run_id=run_id,
