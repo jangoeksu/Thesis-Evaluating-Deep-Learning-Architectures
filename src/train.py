@@ -454,7 +454,6 @@ def initialize_roberta_trainer(
 
     return Trainer(**trainer_kwargs)
 
-
 def build_roberta_training_arguments(
     output_dir: Path,
     epochs: int,
@@ -487,6 +486,7 @@ def build_roberta_training_arguments(
         "save_total_limit": ROBERTA_CONFIG[
             "save_total_limit"
         ],
+        "disable_tqdm": ROBERTA_CONFIG["disable_tqdm"],
         "seed": SEED,
         "data_seed": SEED,
         "fp16": bool(DEVICE.type == "cuda"),
@@ -503,7 +503,6 @@ def build_roberta_training_arguments(
             **training_args_kwargs,
             evaluation_strategy="epoch",
         )
-
 
 def save_roberta_artifacts(
     dataset_name: str,
