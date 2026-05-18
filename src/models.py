@@ -18,6 +18,12 @@ class TextCNN(nn.Module):
     """
     Convolutional neural network for multi-class news classification.
 
+    The CNN uses an embedding layer that is trained from scratch on the
+    experiment datasets. RoBERTa, in contrast, starts from large-scale
+    pretrained transformer weights. The comparison therefore reflects a
+    practical contrast between a lightweight non-pretrained neural model and
+    a pretrained transformer, rather than a perfectly symmetric architecture
+    comparison.
     """
 
     def __init__(
