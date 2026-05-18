@@ -21,7 +21,22 @@ KAGGLE_NEWS_PATH = RAW_DATA_DIR / "Kaggle_News.json"
 
 
 SEED = 42
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def select_device() -> torch.device:
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+
+    if (
+        hasattr(torch.backends, "mps")
+        and torch.backends.mps.is_available()
+    ):
+        return torch.device("mps")
+
+    return torch.device("cpu")
+
+
+DEVICE = select_device()
 
 
 EXPERIMENT_CONFIG = {
@@ -36,6 +51,7 @@ EXPERIMENT_CONFIG = {
     "cnn_learning_rate": 1e-3,
     "roberta_learning_rate": 2e-5,
     "roberta_checkpoint": "roberta-base",
+    "roberta_revision": None,
     "primary_metric": "macro_f1",
     "secondary_metric": "accuracy",
     "ag_news_classes": 4,
@@ -48,6 +64,19 @@ EXPERIMENT_CONFIG = {
 }
 
 
+BASELINE_CONFIG = {
+    "model_name": "TFIDF_LogisticRegression",
+    "max_features": 50000,
+    "ngram_range": (1, 2),
+    "min_df": 2,
+    "sublinear_tf": True,
+    "solver": "lbfgs",
+    "max_iter": 1000,
+    "class_weight": None,
+    "random_state": SEED,
+}
+
+
 CNN_CONFIG = {
     "embedding_dim": 128,
     "num_filters": 128,
@@ -57,8 +86,10 @@ CNN_CONFIG = {
     "min_token_frequency": 2,
 }
 
+
 ROBERTA_CONFIG = {
     "checkpoint": "roberta-base",
+    "revision": None,
     "weight_decay": 0.01,
     "logging_strategy": "epoch",
     "save_strategy": "epoch",
@@ -68,6 +99,15 @@ ROBERTA_CONFIG = {
     "save_total_limit": 1,
     "report_to": "none",
 }
+
+
+DATASET_VERSION_CONFIG = {
+    "ag_news_source": "local AG_train.csv and AG_test.csv",
+    "ag_news_revision": None,
+    "kaggle_news_source": "local Kaggle_News.json",
+    "kaggle_news_revision": None,
+}
+
 
 AG_LABEL_MAPPING = {
     0: "World",
@@ -85,7 +125,7 @@ KAGGLE_CATEGORY_MERGE_MAP = {
     "LATINO VOICES": "IDENTITY_VOICES",
     "QUEER VOICES": "IDENTITY_VOICES",
     "WOMEN": "WOMEN",
-    "BUSINESS": "BUSINESS_MONEY", 
+    "BUSINESS": "BUSINESS_MONEY",
     "MONEY": "BUSINESS_MONEY",
     "COLLEGE": "EDUCATION",
     "EDUCATION": "EDUCATION",
