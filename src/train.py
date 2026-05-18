@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import re
 import time
 from datetime import datetime
 from pathlib import Path
@@ -54,8 +55,12 @@ from src.utils import (
 )
 
 
+TOKEN_PATTERN = re.compile(r"\b\w+(?:'\w+)?\b", flags=re.UNICODE)
+
+
 def simple_tokenize(text: str) -> list[str]:
-    return str(text).lower().split()
+    """Tokenize text for the CNN using a lightweight punctuation-aware rule."""
+    return TOKEN_PATTERN.findall(str(text).lower())
 
 
 def build_vocab(
@@ -63,6 +68,7 @@ def build_vocab(
     max_vocab_size: int = CNN_CONFIG["max_vocab_size"],
     min_token_frequency: int = CNN_CONFIG["min_token_frequency"],
 ) -> dict[str, int]:
+    """Build a frequency-filtered token vocabulary from CNN training texts."""
     token_frequencies: dict[str, int] = {}
 
     for text in texts:
@@ -88,6 +94,8 @@ def build_vocab(
 
 
 class CNNDataset(Dataset):
+    """PyTorch dataset that converts labeled texts into fixed-length CNN tensors."""
+
     def __init__(
         self,
         df: pd.DataFrame,
@@ -103,6 +111,7 @@ class CNNDataset(Dataset):
         return len(self.texts)
 
     def encode_text(self, text: str) -> list[int]:
+        """Convert one text into padded token IDs using the training vocabulary."""
         tokens = simple_tokenize(text)[: self.max_length]
 
         token_ids = [
@@ -130,6 +139,8 @@ class CNNDataset(Dataset):
 
 
 class RobertaTextDataset(Dataset):
+    """PyTorch dataset wrapper for tokenized RoBERTa inputs and labels."""
+
     def __init__(
         self,
         encodings: dict[str, list[list[int]]],
@@ -161,6 +172,7 @@ def train_cnn_one_epoch(
     optimizer: torch.optim.Optimizer,
     criterion: nn.Module,
 ) -> float:
+    """Train the CNN for one epoch and return the mean training loss."""
     model.train()
     total_loss = 0.0
 
@@ -187,6 +199,7 @@ def save_cnn_artifacts(
     model: TextCNN,
     vocab: dict[str, int],
 ) -> None:
+    """Persist the trained CNN state dictionary and vocabulary."""
     dataset_model_dir = MODELS_DIR / f"{run_id}_{dataset_name}_CNN"
     dataset_model_dir.mkdir(parents=True, exist_ok=True)
 
@@ -203,6 +216,24 @@ def save_cnn_artifacts(
         json.dump(vocab, file, indent=4)
 
 
+def save_training_history(
+    dataset_name: str,
+    model_name: str,
+    run_id: str,
+    history_rows: list[dict[str, Any]],
+) -> None:
+    """Save training history so learning curves can be analyzed later."""
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    history_df = pd.DataFrame(history_rows)
+
+    history_df.to_csv(
+        RESULTS_DIR
+        / f"{run_id}_{dataset_name}_{model_name}_training_history.csv",
+        index=False,
+    )
+
+
 def train_cnn(
     dataset_name: str,
     train_df: pd.DataFrame,
@@ -213,6 +244,7 @@ def train_cnn(
     epochs: int,
     run_id: str,
 ) -> tuple[TextCNN, dict[str, float | None]]:
+    """Train, validate, test, and persist a CNN classifier for one dataset."""
     reset_random_seeds(SEED)
     cleanup_memory()
 
@@ -232,6 +264,7 @@ def train_cnn(
             "dropout": CNN_CONFIG["dropout"],
             "max_vocab_size": CNN_CONFIG["max_vocab_size"],
             "min_token_frequency": CNN_CONFIG["min_token_frequency"],
+            "tokenization": "regex_word_tokenization",
         },
     )
 
@@ -291,13 +324,14 @@ def train_cnn(
 
     best_validation_macro_f1 = -1.0
     best_model_state: dict[str, torch.Tensor] | None = None
+    training_history: list[dict[str, Any]] = []
 
-        reset_peak_gpu_memory_stats()
+    reset_peak_gpu_memory_stats()
     synchronize_cuda_if_available()
     training_start = time.time()
 
-    for _ in range(epochs):
-        train_cnn_one_epoch(
+    for epoch in range(1, epochs + 1):
+        training_loss = train_cnn_one_epoch(
             model=model,
             dataloader=train_loader,
             optimizer=optimizer,
@@ -307,6 +341,20 @@ def train_cnn(
         validation_metrics, _, _ = evaluate_cnn(
             model=model,
             dataloader=validation_loader,
+        )
+
+        training_history.append(
+            {
+                "epoch": epoch,
+                "train_loss": float(training_loss),
+                "validation_accuracy": float(validation_metrics["accuracy"]),
+                "validation_macro_f1": float(
+                    validation_metrics["macro_f1"]
+                ),
+                "validation_weighted_f1": float(
+                    validation_metrics["weighted_f1"]
+                ),
+            }
         )
 
         if validation_metrics["macro_f1"] > best_validation_macro_f1:
@@ -320,6 +368,13 @@ def train_cnn(
     synchronize_cuda_if_available()
     training_time = time.time() - training_start
     memory_metrics = collect_peak_gpu_memory_metrics()
+
+    save_training_history(
+        dataset_name=dataset_name,
+        model_name="CNN",
+        run_id=run_id,
+        history_rows=training_history,
+    )
 
     if best_model_state is None:
         raise RuntimeError("CNN training did not produce a best model state.")
@@ -362,6 +417,7 @@ def tokenize_roberta_split(
     tokenizer: AutoTokenizer,
     df: pd.DataFrame,
 ) -> dict[str, list[list[int]]]:
+    """Tokenize one dataset split for RoBERTa using shared experiment settings."""
     return tokenizer(
         df["text"].tolist(),
         truncation=True,
@@ -378,6 +434,7 @@ def initialize_roberta_trainer(
     tokenizer: AutoTokenizer,
     data_collator: DataCollatorWithPadding,
 ) -> Trainer:
+    """Create a Trainer while remaining compatible with nearby Transformers APIs."""
     trainer_parameters = inspect.signature(Trainer.__init__).parameters
 
     trainer_kwargs = {
@@ -401,6 +458,7 @@ def build_roberta_training_arguments(
     output_dir: Path,
     epochs: int,
 ) -> TrainingArguments:
+    """Construct reproducible RoBERTa training arguments for one experiment."""
     training_args_kwargs = {
         "output_dir": str(output_dir),
         "num_train_epochs": epochs,
@@ -452,11 +510,31 @@ def save_roberta_artifacts(
     trainer: Trainer,
     tokenizer: AutoTokenizer,
 ) -> None:
+    """Persist the fine-tuned RoBERTa model and matching tokenizer."""
     dataset_model_dir = MODELS_DIR / f"{run_id}_{dataset_name}_RoBERTa"
     dataset_model_dir.mkdir(parents=True, exist_ok=True)
 
     trainer.save_model(str(dataset_model_dir))
     tokenizer.save_pretrained(str(dataset_model_dir))
+
+
+def extract_roberta_training_history(
+    trainer: Trainer,
+) -> list[dict[str, Any]]:
+    """Extract Trainer log history in a tabular format suitable for CSV export."""
+    training_history: list[dict[str, Any]] = []
+
+    for log_entry in trainer.state.log_history:
+        cleaned_entry = {
+            key: value
+            for key, value in log_entry.items()
+            if isinstance(value, (int, float, str, bool)) or value is None
+        }
+
+        if cleaned_entry:
+            training_history.append(cleaned_entry)
+
+    return training_history
 
 
 def train_roberta(
@@ -469,6 +547,7 @@ def train_roberta(
     epochs: int,
     run_id: str,
 ) -> tuple[Trainer, dict[str, float | None]]:
+    """Train, validate, test, and persist RoBERTa for one dataset."""
     reset_random_seeds(SEED)
     cleanup_memory()
 
@@ -563,6 +642,13 @@ def train_roberta(
     training_time = time.time() - training_start
     memory_metrics = collect_peak_gpu_memory_metrics()
 
+    save_training_history(
+        dataset_name=dataset_name,
+        model_name="RoBERTa",
+        run_id=run_id,
+        history_rows=extract_roberta_training_history(trainer),
+    )
+
     validation_metrics, _, _ = evaluate_roberta_validation(
         trainer=trainer,
         validation_dataset=validation_dataset,
@@ -608,6 +694,7 @@ def train_roberta(
 def build_dataset_registry(
     datasets: dict[str, dict[str, pd.DataFrame]],
 ) -> dict[str, dict[str, Any]]:
+    """Normalize dataset metadata used by the full experiment runner."""
     kaggle_label_names = (
         datasets["Kaggle_News"]["train"][["label", "label_name"]]
         .drop_duplicates()
@@ -644,6 +731,7 @@ def create_full_experiment_config(
     run_id: str,
     dataset_registry: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
+    """Create a complete metadata snapshot for a full experiment run."""
     return {
         "run_id": run_id,
         "run_type": "full_experiment",
@@ -679,6 +767,7 @@ def create_result_row(
     metrics: dict[str, float | None] | None = None,
     error: Exception | None = None,
 ) -> dict[str, Any]:
+    """Convert one model run into a flat results-table record."""
     metrics = metrics or {}
 
     return {
@@ -730,6 +819,7 @@ def save_full_results(
     full_results: list[dict[str, Any]],
     run_id: str,
 ) -> pd.DataFrame:
+    """Save incremental and latest full-experiment summary CSV files."""
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
     results_df = pd.DataFrame(full_results)
@@ -748,6 +838,7 @@ def save_full_results(
 
 
 def run_full_experiment() -> pd.DataFrame:
+    """Run all dataset-model combinations and save results incrementally."""
     reset_random_seeds(SEED)
     cleanup_memory()
 
