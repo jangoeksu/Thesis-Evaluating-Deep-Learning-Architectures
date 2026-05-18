@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 from pathlib import Path
@@ -31,8 +32,19 @@ def ensure_raw_data_directory_exists() -> None:
     RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def compute_file_sha256(path: Path) -> str:
+    """Compute a SHA-256 hash for one local file."""
+    sha256 = hashlib.sha256()
+
+    with open(path, "rb") as file:
+        for chunk in iter(lambda: file.read(8192), b""):
+            sha256.update(chunk)
+
+    return sha256.hexdigest()
+
+
 def save_raw_data_metadata() -> None:
-    """Save configured source and revision information for raw datasets."""
+    """Save configured sources, revisions, output paths, and raw-file hashes."""
     metadata: dict[str, Any] = {
         "ag_news_source": DATASET_VERSION_CONFIG["ag_news_source"],
         "ag_news_revision": DATASET_VERSION_CONFIG["ag_news_revision"],
@@ -45,6 +57,11 @@ def save_raw_data_metadata() -> None:
         "ag_train_output_path": str(AG_TRAIN_OUTPUT_PATH),
         "ag_test_output_path": str(AG_TEST_OUTPUT_PATH),
         "kaggle_news_output_path": str(KAGGLE_NEWS_OUTPUT_PATH),
+        "ag_train_sha256": compute_file_sha256(AG_TRAIN_OUTPUT_PATH),
+        "ag_test_sha256": compute_file_sha256(AG_TEST_OUTPUT_PATH),
+        "kaggle_news_sha256": compute_file_sha256(
+            KAGGLE_NEWS_OUTPUT_PATH
+        ),
     }
 
     with open(
