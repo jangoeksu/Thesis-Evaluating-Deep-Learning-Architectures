@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -19,11 +20,13 @@ from configs.experiment_settings import (
 
 
 def ensure_directories_exist() -> None:
+    """Create output directories required by the preprocessing pipeline."""
     PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def ensure_raw_files_exist() -> None:
+    """Raise an error when one or more required raw dataset files are missing."""
     required_files = [
         AG_TRAIN_PATH,
         AG_TEST_PATH,
@@ -39,7 +42,8 @@ def ensure_raw_files_exist() -> None:
         )
 
 
-def clean_text_value(value) -> str:
+def clean_text_value(value: Any) -> str:
+    """Normalize one text-like value into a clean single-line string."""
     if pd.isna(value):
         return ""
 
@@ -52,7 +56,11 @@ def clean_text_value(value) -> str:
     return value.strip()
 
 
-def combine_headline_and_description(headline, short_description) -> str:
+def combine_headline_and_description(
+    headline: Any,
+    short_description: Any,
+) -> str:
+    """Combine Kaggle headline and description while avoiding empty duplicates."""
     headline = clean_text_value(headline)
     short_description = clean_text_value(short_description)
 
@@ -69,6 +77,7 @@ def combine_headline_and_description(headline, short_description) -> str:
 
 
 def load_ag_news() -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load raw AG News train and test files from disk."""
     ag_train_raw = pd.read_csv(
         AG_TRAIN_PATH,
         usecols=["text", "label"],
@@ -85,6 +94,7 @@ def load_ag_news() -> tuple[pd.DataFrame, pd.DataFrame]:
 
 
 def load_kaggle_news() -> pd.DataFrame:
+    """Load the raw Kaggle News JSON-lines dataset from disk."""
     return pd.read_json(
         KAGGLE_NEWS_PATH,
         lines=True,
@@ -95,6 +105,7 @@ def validate_ag_news(
     ag_train_raw: pd.DataFrame,
     ag_test_raw: pd.DataFrame,
 ) -> None:
+    """Validate AG News columns and confirm the expected label IDs are present."""
     expected_columns = ["text", "label"]
 
     if list(ag_train_raw.columns) != expected_columns:
@@ -125,6 +136,12 @@ def validate_ag_news(
 
 
 def validate_kaggle_news(kaggle_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Validate the Kaggle News schema and category mapping.
+
+    The returned DataFrame already contains the trusted merged-category column.
+    Later preprocessing steps therefore do not repeat the merge validation.
+    """
     required_columns = {
         "link",
         "headline",
@@ -151,15 +168,15 @@ def validate_kaggle_news(kaggle_raw: pd.DataFrame) -> pd.DataFrame:
             f"{original_class_count}"
         )
 
-    merge_check = kaggle_raw.copy()
-    merge_check["category"] = merge_check["category"].astype(str)
-    merge_check["merged_category"] = merge_check["category"].map(
+    validated_df = kaggle_raw.copy()
+    validated_df["category"] = validated_df["category"].astype(str)
+    validated_df["merged_category"] = validated_df["category"].map(
         KAGGLE_CATEGORY_MERGE_MAP
     )
 
     unmapped_categories = sorted(
-        merge_check.loc[
-            merge_check["merged_category"].isna(),
+        validated_df.loc[
+            validated_df["merged_category"].isna(),
             "category",
         ].unique()
     )
@@ -169,7 +186,7 @@ def validate_kaggle_news(kaggle_raw: pd.DataFrame) -> pd.DataFrame:
             f"Unmapped Kaggle categories found: {unmapped_categories}"
         )
 
-    merged_class_count = merge_check["merged_category"].nunique()
+    merged_class_count = validated_df["merged_category"].nunique()
     expected_merged_count = EXPERIMENT_CONFIG[
         "kaggle_expected_merged_classes"
     ]
@@ -180,9 +197,11 @@ def validate_kaggle_news(kaggle_raw: pd.DataFrame) -> pd.DataFrame:
             f"{merged_class_count}. Expected: {expected_merged_count}"
         )
 
-    return merge_check
+    return validated_df
+
 
 def preprocess_ag_news(df: pd.DataFrame) -> pd.DataFrame:
+    """Clean AG News text values and attach human-readable label names."""
     df = df.copy()
     df["text"] = df["text"].apply(clean_text_value)
     df = df[df["text"].str.len() > 0]
@@ -194,23 +213,30 @@ def preprocess_ag_news(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def preprocess_kaggle_news(
-    df: pd.DataFrame,
+    validated_df: pd.DataFrame,
 ) -> tuple[pd.DataFrame, dict[int, str]]:
-    df = df.copy()
-    df["category"] = df["category"].astype(str)
-    df["merged_category"] = df["category"].map(KAGGLE_CATEGORY_MERGE_MAP)
+    """
+    Clean validated Kaggle News records and create integer labels.
 
-    unmapped_categories = sorted(
-        df.loc[
-            df["merged_category"].isna(),
-            "category",
-        ].unique()
-    )
+    This function assumes that `validate_kaggle_news` has already created and
+    checked the `merged_category` column.
+    """
+    required_columns = {
+        "headline",
+        "short_description",
+        "category",
+        "merged_category",
+    }
 
-    if unmapped_categories:
+    missing_columns = required_columns - set(validated_df.columns)
+
+    if missing_columns:
         raise ValueError(
-            f"Unmapped Kaggle categories found: {unmapped_categories}"
+            "Validated Kaggle News data is missing required columns: "
+            f"{sorted(missing_columns)}"
         )
+
+    df = validated_df.copy()
 
     df["text"] = df.apply(
         lambda row: combine_headline_and_description(
@@ -251,6 +277,12 @@ def remove_conflicting_and_duplicate_texts(
     df: pd.DataFrame,
     label_column: str,
 ) -> tuple[pd.DataFrame, int, int]:
+    """
+    Remove duplicate texts and discard texts linked to conflicting labels.
+
+    A text that appears with multiple distinct labels is removed entirely to
+    avoid ambiguous supervision and leakage into later splits.
+    """
     duplicate_text_count = int(df.duplicated(subset=["text"]).sum())
 
     label_counts_per_text = df.groupby("text")[label_column].nunique()
@@ -271,6 +303,7 @@ def remove_ag_train_test_overlap(
     ag_train_df: pd.DataFrame,
     ag_test_df: pd.DataFrame,
 ) -> tuple[pd.DataFrame, int]:
+    """Remove AG News training texts that also appear in the fixed test split."""
     test_texts = set(ag_test_df["text"])
     overlap_count = int(ag_train_df["text"].isin(test_texts).sum())
 
@@ -286,6 +319,7 @@ def create_splits(
     ag_test_clean: pd.DataFrame,
     kaggle_clean: pd.DataFrame,
 ) -> dict[str, dict[str, pd.DataFrame]]:
+    """Create stratified train, validation, and test splits for both datasets."""
     ag_train_df, ag_val_df = train_test_split(
         ag_train_clean,
         test_size=EXPERIMENT_CONFIG["ag_validation_size"],
@@ -328,6 +362,7 @@ def calculate_split_overlap(
     val_df: pd.DataFrame,
     test_df: pd.DataFrame,
 ) -> tuple[int, int, int]:
+    """Count text overlap across train, validation, and test splits."""
     train_texts = set(train_df["text"])
     val_texts = set(val_df["text"])
     test_texts = set(test_df["text"])
@@ -342,7 +377,8 @@ def calculate_split_overlap(
 def validate_no_split_overlap(
     datasets: dict[str, dict[str, pd.DataFrame]],
 ) -> pd.DataFrame:
-    leakage_rows = []
+    """Verify that no text appears across multiple final dataset splits."""
+    leakage_rows: list[dict[str, int | str]] = []
 
     for dataset_name, split_dict in datasets.items():
         train_val_overlap, train_test_overlap, val_test_overlap = (
@@ -394,7 +430,8 @@ def validate_no_split_overlap(
 def build_split_summary(
     datasets: dict[str, dict[str, pd.DataFrame]],
 ) -> pd.DataFrame:
-    rows = []
+    """Build a compact table summarizing rows and class counts per split."""
+    rows: list[dict[str, int | str]] = []
 
     for dataset_name, split_dict in datasets.items():
         for split_name, df in split_dict.items():
@@ -413,6 +450,7 @@ def build_split_summary(
 def save_processed_datasets(
     datasets: dict[str, dict[str, pd.DataFrame]],
 ) -> None:
+    """Persist processed text-label CSV files for reproducible experiments."""
     file_names = {
         ("AG_News", "train"): "ag_train_processed.csv",
         ("AG_News", "validation"): "ag_validation_processed.csv",
@@ -430,6 +468,7 @@ def save_processed_datasets(
 
 
 def save_label_mappings(kaggle_label_mapping: dict[int, str]) -> None:
+    """Save label mappings for AG News and the merged Kaggle categories."""
     with open(
         PROCESSED_DATA_DIR / "ag_label_mapping.json",
         "w",
@@ -451,6 +490,7 @@ def save_preprocessing_summaries(
     duplicate_summary: pd.DataFrame,
     kaggle_merge_check: pd.DataFrame,
 ) -> None:
+    """Persist preprocessing quality-control summaries and category counts."""
     split_summary.to_csv(
         RESULTS_DIR / "split_summary.csv",
         index=False,
@@ -492,6 +532,13 @@ def save_preprocessing_summaries(
 
 
 def prepare_datasets() -> dict[str, dict[str, pd.DataFrame]]:
+    """
+    Execute the complete preprocessing pipeline and return all final splits.
+
+    The function validates raw files, cleans text, removes duplicates and
+    leakage risks, builds deterministic splits, saves preprocessing summaries,
+    and returns a registry of final train/validation/test DataFrames.
+    """
     ensure_directories_exist()
     ensure_raw_files_exist()
 
@@ -522,7 +569,9 @@ def prepare_datasets() -> dict[str, dict[str, pd.DataFrame]]:
         )
     )
 
-    kaggle_clean, kaggle_label_mapping = preprocess_kaggle_news(kaggle_raw)
+    kaggle_clean, kaggle_label_mapping = preprocess_kaggle_news(
+        kaggle_merge_check
+    )
 
     kaggle_clean, kaggle_duplicate_count, kaggle_conflicting_count = (
         remove_conflicting_and_duplicate_texts(
