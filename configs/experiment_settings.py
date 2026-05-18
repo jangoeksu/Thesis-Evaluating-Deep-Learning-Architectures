@@ -50,8 +50,7 @@ EXPERIMENT_CONFIG = {
     "max_length": 256,
     "cnn_learning_rate": 1e-3,
     "roberta_learning_rate": 2e-5,
-    "roberta_checkpoint": "roberta-base",
-    "roberta_revision": None,
+    "roberta_checkpoint": "FacebookAI/roberta-base",
     "primary_metric": "macro_f1",
     "secondary_metric": "accuracy",
     "ag_news_classes": 4,
@@ -61,19 +60,6 @@ EXPERIMENT_CONFIG = {
     "kaggle_expected_merged_classes": 22,
     "kaggle_test_size": 0.15,
     "kaggle_validation_size_from_train_val": 0.1765,
-}
-
-
-BASELINE_CONFIG = {
-    "model_name": "TFIDF_LogisticRegression",
-    "max_features": 50000,
-    "ngram_range": (1, 2),
-    "min_df": 2,
-    "sublinear_tf": True,
-    "solver": "lbfgs",
-    "max_iter": 1000,
-    "class_weight": None,
-    "random_state": SEED,
 }
 
 
@@ -88,8 +74,8 @@ CNN_CONFIG = {
 
 
 ROBERTA_CONFIG = {
-    "checkpoint": "roberta-base",
-    "revision": None,
+    "checkpoint": "FacebookAI/roberta-base",
+    "revision": "e2da8e2f811d1448a5b465c236feacd80ffbac7b",
     "weight_decay": 0.01,
     "logging_strategy": "epoch",
     "save_strategy": "epoch",
@@ -102,9 +88,9 @@ ROBERTA_CONFIG = {
 
 
 DATASET_VERSION_CONFIG = {
-    "ag_news_source": "local AG_train.csv and AG_test.csv",
+    "ag_news_source": "fancyzhx/ag_news",
     "ag_news_revision": None,
-    "kaggle_news_source": "local Kaggle_News.json",
+    "kaggle_news_source": "rmisra/news-category-dataset",
     "kaggle_news_revision": None,
 }
 
