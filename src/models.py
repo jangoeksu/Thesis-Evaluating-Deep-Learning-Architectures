@@ -10,6 +10,7 @@ from transformers import (
 from configs.experiment_settings import (
     CNN_CONFIG,
     EXPERIMENT_CONFIG,
+    ROBERTA_CONFIG,
 )
 
 
@@ -81,15 +82,18 @@ def initialize_roberta_model(
     num_classes: int,
 ) -> PreTrainedModel:
     """
-    Loading the configured RoBERTa checkpoint for sequence classification.
-
-    The classifier head is adapted to the number of labels in the current
-    dataset, while the base transformer weights come from the pretrained
-    checkpoint defined in the experiment settings.
+    Load the configured RoBERTa checkpoint for sequence classification.
     """
+    pretrained_kwargs = {
+        "num_labels": num_classes,
+    }
+
+    if ROBERTA_CONFIG["revision"] is not None:
+        pretrained_kwargs["revision"] = ROBERTA_CONFIG["revision"]
+
     model = AutoModelForSequenceClassification.from_pretrained(
         EXPERIMENT_CONFIG["roberta_checkpoint"],
-        num_labels=num_classes,
+        **pretrained_kwargs,
     )
 
     return model
