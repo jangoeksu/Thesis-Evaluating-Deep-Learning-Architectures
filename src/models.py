@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import torch
 from torch import nn
-from transformers import AutoModelForSequenceClassification
+from transformers import (
+    AutoModelForSequenceClassification,
+    PreTrainedModel,
+)
 
 from configs.experiment_settings import (
     CNN_CONFIG,
@@ -11,6 +14,11 @@ from configs.experiment_settings import (
 
 
 class TextCNN(nn.Module):
+    """
+    Convolutional neural network for multi-class news classification.
+
+    """
+
     def __init__(
         self,
         vocab_size: int,
@@ -47,6 +55,9 @@ class TextCNN(nn.Module):
         )
 
     def forward(self, input_ids: torch.Tensor) -> torch.Tensor:
+        """
+        Run the CNN forward pass and return unnormalized class logits.
+        """
         embedded = self.embedding(input_ids)
         embedded = embedded.permute(0, 2, 1)
 
@@ -68,7 +79,14 @@ class TextCNN(nn.Module):
 
 def initialize_roberta_model(
     num_classes: int,
-) -> AutoModelForSequenceClassification:
+) -> PreTrainedModel:
+    """
+    Loading the configured RoBERTa checkpoint for sequence classification.
+
+    The classifier head is adapted to the number of labels in the current
+    dataset, while the base transformer weights come from the pretrained
+    checkpoint defined in the experiment settings.
+    """
     model = AutoModelForSequenceClassification.from_pretrained(
         EXPERIMENT_CONFIG["roberta_checkpoint"],
         num_labels=num_classes,
