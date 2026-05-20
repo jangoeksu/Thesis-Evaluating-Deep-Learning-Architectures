@@ -1,0 +1,13 @@
+true_class,predicted_class,count
+Business,Sci/Tech,130
+Sci/Tech,Business,72
+World,Business,40
+World,Sci/Tech,39
+Business,World,36
+Sci/Tech,World,23
+Business,Sports,9
+World,Sports,7
+Sports,World,6
+Sports,Business,6
+Sci/Tech,Sports,6
+Sports,Sci/Tech,5
