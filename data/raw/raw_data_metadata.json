@@ -1,0 +1,12 @@
+{
+    "ag_news_source": "fancyzhx/ag_news",
+    "ag_news_revision": null,
+    "kaggle_news_source": "rmisra/news-category-dataset",
+    "kaggle_news_revision": null,
+    "ag_train_output_path": "/content/Thesis-Evaluating-Deep-Learning-Architectures/data/raw/AG_train.csv",
+    "ag_test_output_path": "/content/Thesis-Evaluating-Deep-Learning-Architectures/data/raw/AG_test.csv",
+    "kaggle_news_output_path": "/content/Thesis-Evaluating-Deep-Learning-Architectures/data/raw/Kaggle_News.json",
+    "ag_train_sha256": "aa1eacef4c2c14b4d79ce593be6460b6bd25da42b08cbf78f84f4e9d1bcd444a",
+    "ag_test_sha256": "7f524a9977e1849efd8ba1c671a1d6dfa6c841026b62a4fb86b3a85d7ea41240",
+    "kaggle_news_sha256": "2cfc51fa4a82a96ecbe251fa383737aa1dea2e0a517f61dece633fcc25a4a065"
+}

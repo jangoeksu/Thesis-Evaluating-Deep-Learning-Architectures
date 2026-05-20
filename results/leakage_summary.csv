@@ -1,0 +1,7 @@
+dataset,overlap_type,count
+AG_News,train_validation_text_overlap,0
+AG_News,train_test_text_overlap,0
+AG_News,validation_test_text_overlap,0
+Kaggle_News,train_validation_text_overlap,0
+Kaggle_News,train_test_text_overlap,0
+Kaggle_News,validation_test_text_overlap,0

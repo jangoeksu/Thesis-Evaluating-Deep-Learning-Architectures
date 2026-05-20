@@ -1,0 +1,7 @@
+dataset,split,rows,classes
+AG_News,train,107911,4
+AG_News,validation,11991,4
+AG_News,test,7600,4
+Kaggle_News,train,146309,22
+Kaggle_News,validation,31359,22
+Kaggle_News,test,31354,22

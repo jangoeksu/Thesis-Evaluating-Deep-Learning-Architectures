@@ -1,0 +1,2 @@
+model_a,model_b,model_a_only_correct,model_b_only_correct,discordant_pairs,mcnemar_statistic,p_value,test_variant
+CNN,RoBERTa,123,431,554,170.1245487364621,6.949664805178179e-39,continuity_corrected_asymptotic_mcnemar

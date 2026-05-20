@@ -1,0 +1,14 @@
+{
+    "python_version": "3.12.13",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.35",
+    "pandas_version": "3.0.3",
+    "numpy_version": "2.4.5",
+    "torch_version": "2.12.0+cu130",
+    "transformers_version": "5.8.1",
+    "active_device": "cuda",
+    "cuda_available": true,
+    "cuda_device_count": 1,
+    "cuda_gpu_name": "NVIDIA A100-SXM4-80GB",
+    "mps_available": false,
+    "mps_built": false
+}

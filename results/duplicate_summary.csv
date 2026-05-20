@@ -1,0 +1,7 @@
+dataset,metric,value
+AG_News,duplicate_training_texts_detected_before_removal,79
+AG_News,conflicting_training_texts_detected_before_removal,15
+AG_News,train_test_overlaps_removed_from_training,4
+Kaggle_News,duplicate_texts_detected_before_removal,486
+Kaggle_News,conflicting_texts_detected_before_removal,14
+Kaggle_News,rows_after_duplicate_removal,209022
