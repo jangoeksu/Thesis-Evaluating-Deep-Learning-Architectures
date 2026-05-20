@@ -185,7 +185,7 @@ The results are therefore interpreted as a comparison of practical model choices
 
 ## CNN Tokenization Choice
 
-The CNN baseline uses a simple lowercasing and whitespace-based tokenization strategy. This design keeps the baseline transparent, computationally lightweight, and easy to reproduce.
+The CNN baseline uses a lightweight lowercasing and regex-based word tokenization strategy that preserves apostrophe-containing tokens while remaining computationally simple and reproducible.
 
 The tokenizer is intentionally simpler than the subword tokenizer used by RoBERTa. This difference reflects the broader practical trade-off examined in the thesis: a lightweight conventional neural architecture versus a stronger pretrained transformer-based pipeline.
 
