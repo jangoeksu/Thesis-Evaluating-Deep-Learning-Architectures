@@ -1,4 +1,4 @@
-# Comparing CNN and RoBERTa for Multi-Class Classification of English News Articles
+# Comparing CNN and RoBERTa for Multi-Class Classification of English News Articles // update: graded Sehr gut
 
 This repository contains the practical implementation, experiment pipeline, and selected final outputs for my bachelor thesis:
 
