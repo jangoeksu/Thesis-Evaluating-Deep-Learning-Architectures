@@ -1,4 +1,4 @@
-# Comparing CNN and RoBERTa for Multi-Class Classification of English News Articles // update: graded Sehr gut
+# Comparing CNN and RoBERTa for Multi-Class Classification of English News Articles 
 
 This repository contains the practical implementation, experiment pipeline, and selected final outputs for my bachelor thesis:
 
@@ -569,3 +569,5 @@ The repository intentionally excludes:
 - text-based qualitative misclassification example files.
 
 This keeps the repository compact while preserving the information needed to inspect the practical work and understand the reported thesis results.
+
+google-site-verification: google9bf58b8a9598b4e7.html
