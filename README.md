@@ -570,4 +570,3 @@ The repository intentionally excludes:
 
 This keeps the repository compact while preserving the information needed to inspect the practical work and understand the reported thesis results.
 
-google-site-verification: google9bf58b8a9598b4e7.html
